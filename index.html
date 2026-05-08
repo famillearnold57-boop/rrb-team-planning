@@ -11,7 +11,7 @@
   --black:#111111; --yellow:#ffd84d; --brown:#8a5a2b; --cream:#fff7e6; --cream2:#f6eddc;
   --red:#e85d5d; --blue:#6cb7d9; --green:#2fa866; --line:#d6b27a;
 }
-*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--cream2);color:#111}
 button,input{font:inherit}
 .header{background:var(--black);color:var(--yellow);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -36,7 +36,20 @@ button,input{font:inherit}
 .tableWrap{overflow:auto}
 table.planning{border-collapse:collapse;width:max-content;min-width:100%;table-layout:fixed}
 .planning th,.planning td{border:1px solid #d8c2a0;height:27px;padding:0;text-align:center;vertical-align:middle}
-.planning th{background:#ffdd65;font-size:12px;font-weight:900}
+.planning th{
+background:#ffdd65;
+font-size:12px;
+font-weight:900;
+position:relative;
+text-align:left;
+padding-left:0;
+}
+.planning th span.hourLabel{
+position:relative;
+left:-8px;
+display:inline-block;
+font-weight:900;
+}
 .nameCol{position:sticky;left:0;z-index:3;background:#fffaf0!important;min-width:190px;width:190px;text-align:left!important;padding-left:8px!important;font-weight:800}
 .infoCol{min-width:48px;width:48px;font-weight:900;font-size:13px;background:#fff7e6}
 .slotCell{min-width:31px;width:31px;cursor:pointer;user-select:none;background:#fff}
@@ -54,21 +67,16 @@ table.planning{border-collapse:collapse;width:max-content;min-width:100%;table-l
  body *{visibility:hidden!important} #printArea,#printArea *{visibility:visible!important}
  #printArea{position:absolute;left:0;top:0;width:100%;background:white}.noPrint{display:none!important}
  @page{size:A4 portrait;margin:8mm}
+
+  .type-presence{background:#8a5a2b!important}
+  .type-ferie{background:#ffd84d!important}
+  .type-maladie{background:#e85d5d!important}
+  .type-conges{background:#6cb7d9!important}
+
  .card{break-inside:avoid;margin-bottom:5mm;box-shadow:none;border-radius:6px}.dayHead{font-size:13px;padding:4px 6px}
  .planning th,.planning td{height:15px;font-size:8px}.nameCol{min-width:95px;width:95px;font-size:9px;padding-left:3px!important}
  .infoCol{min-width:27px;width:27px;font-size:8px}.slotCell{min-width:16px;width:16px}
 }
-
-@media print{
- .type-presence{background:#8a5a2b!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .type-ferie{background:#ffd84d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .type-maladie{background:#e85d5d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .type-conges{background:#6cb7d9!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .dayHead{background:#ffd84d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .planning th{background:#ffdd65!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
- .nameCol,.infoCol{background:#fff7e6!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-}
-
 </style>
 </head>
 <body>
@@ -206,7 +214,14 @@ function renderDay(dayIndex){
  const head=document.createElement("div");head.className="dayHead";head.innerHTML=`<span>${DAYS[dayIndex]} ${frDate(addDays(currentWeekStart,dayIndex))}</span><span class="small">8h → 20h</span>`;card.appendChild(head);
  const wrap=document.createElement("div");wrap.className="tableWrap";const table=document.createElement("table");table.className="planning";
  const tr1=document.createElement("tr");tr1.innerHTML=`<th class="nameCol">Salarié</th><th class="infoCol">Contrat</th><th class="infoCol">Jour</th><th class="infoCol">Sem.</th><th class="infoCol">Repas</th>`;
- for(let s=0;s<SLOT_COUNT;s++){const th=document.createElement("th");th.textContent=slotLabel(s);tr1.appendChild(th)} table.appendChild(tr1);
+ for(let s=0;s<SLOT_COUNT;s++){
+ const th=document.createElement("th");
+ const total=8*60+s*30;
+ const h=Math.floor(total/60);
+ const m=total%60;
+ th.innerHTML = m===0 ? `<span class="hourLabel">${h}h</span>` : "";
+ tr1.appendChild(th)
+} table.appendChild(tr1);
  const list=activeEmployeesForDay(dayIndex);
  for(const emp of list){
   const tr=document.createElement("tr");

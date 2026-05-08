@@ -295,7 +295,35 @@ async function addEmployee(){
  }
 }
 function exportPdf(){const old=viewMode;viewMode="week";render();setTimeout(()=>{window.print();viewMode=old;render()},200)}
-async function exportJpg(){const old=viewMode;viewMode="week";render();await new Promise(r=>setTimeout(r,250));const area=document.getElementById("printArea");const canvas=await html2canvas(area,{backgroundColor:"#ffffff",scale:2});const a=document.createElement("a");a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;a.href=canvas.toDataURL("image/jpeg",.95);a.click();viewMode=old;render()}
+async function exportJpg(){
+ const old=viewMode;
+ viewMode="week";
+ render();
+
+ await new Promise(r=>setTimeout(r,400));
+
+ const area=document.getElementById("printArea");
+
+ const canvas=await html2canvas(area,{
+   backgroundColor:"#ffffff",
+   scale:2,
+   useCORS:true,
+   logging:false
+ });
+
+ const ctx = canvas.getContext("2d");
+ ctx.globalCompositeOperation = "destination-over";
+ ctx.fillStyle = "#ffffff";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ const a=document.createElement("a");
+ a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;
+ a.href=canvas.toDataURL("image/jpeg",0.98);
+ a.click();
+
+ viewMode=old;
+ render();
+}
 init();
 </script>
 </body>

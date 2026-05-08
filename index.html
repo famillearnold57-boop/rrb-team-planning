@@ -11,7 +11,7 @@
   --black:#111111; --yellow:#ffd84d; --brown:#8a5a2b; --cream:#fff7e6; --cream2:#f6eddc;
   --red:#e85d5d; --blue:#6cb7d9; --green:#2fa866; --line:#d6b27a;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
 html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:var(--cream2);color:#111}
 button,input{font:inherit}
 .header{background:var(--black);color:var(--yellow);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -58,6 +58,17 @@ table.planning{border-collapse:collapse;width:max-content;min-width:100%;table-l
  .planning th,.planning td{height:15px;font-size:8px}.nameCol{min-width:95px;width:95px;font-size:9px;padding-left:3px!important}
  .infoCol{min-width:27px;width:27px;font-size:8px}.slotCell{min-width:16px;width:16px}
 }
+
+@media print{
+ .type-presence{background:#8a5a2b!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .type-ferie{background:#ffd84d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .type-maladie{background:#e85d5d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .type-conges{background:#6cb7d9!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .dayHead{background:#ffd84d!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .planning th{background:#ffdd65!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .nameCol,.infoCol{background:#fff7e6!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
+
 </style>
 </head>
 <body>

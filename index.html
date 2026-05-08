@@ -94,7 +94,7 @@ table.planning{border-collapse:collapse;width:max-content;min-width:100%;table-l
 <div class="modal noPrint" id="empModal">
   <div class="modalBox">
     <h2>Gestion salariés</h2>
-    <p class="small">Date d’entrée/sortie = masquage automatique sans perte d’historique.</p>
+    <p class="small">Date d’entrée/sortie = masquage automatique sans perte d’historique. Affichage planning limité à 8 salariés actifs par jour.</p>
     <div id="empList"></div>
     <h3>Ajouter salarié</h3>
     <div class="empRow">
@@ -167,7 +167,9 @@ async function loadShifts(){
 }
 function activeEmployeesForDay(dayIndex){
  const date=localDateKey(addDays(currentWeekStart,dayIndex));
- return employees.filter(e=>(!e.start_date||e.start_date<=date)&&(!e.end_date||e.end_date>=date)).slice(0,8);
+ return employees
+  .filter(e=>(!e.start_date||e.start_date<=date)&&(!e.end_date||e.end_date>=date))
+  .slice(0,8);
 }
 function getShift(empId,dayIndex,slot){return shifts[`${empId}|${DAYS[dayIndex]}|${slot}`]||"empty"}
 function setShiftLocal(empId,dayIndex,slot,type){const key=`${empId}|${DAYS[dayIndex]}|${slot}`;if(type==="empty")delete shifts[key];else shifts[key]=type}
@@ -227,11 +229,44 @@ function renderEmployees(){
  }
 }
 async function addEmployee(){
- const name=document.getElementById("newName").value.trim();if(!name)return;
- const contract=Number(document.getElementById("newContract").value||0);const start=document.getElementById("newStart").value||localDateKey(currentWeekStart);const end=document.getElementById("newEnd").value||null;
- await supabaseClient.from("employees").insert({name,contract_hours:contract,start_date:start,end_date:end});
- document.getElementById("newName").value="";document.getElementById("newContract").value="";
- await loadEmployees();renderEmployees();render()
+ const name=document.getElementById("newName").value.trim();
+ if(!name){ alert("Mets au moins un nom."); return; }
+
+ const contract=Number(document.getElementById("newContract").value||0);
+
+ // Si aucune date d'entrée n'est indiquée, le salarié est visible immédiatement et sur toutes les semaines.
+ const start=document.getElementById("newStart").value || null;
+ const end=document.getElementById("newEnd").value || null;
+
+ const result = await supabaseClient.from("employees").insert({
+   name,
+   contract_hours:contract,
+   start_date:start,
+   end_date:end
+ }).select().single();
+
+ if(result.error){
+   console.error(result.error);
+   alert("Erreur ajout salarié : " + result.error.message);
+   setStatus("Erreur ajout salarié");
+   return;
+ }
+
+ document.getElementById("newName").value="";
+ document.getElementById("newContract").value="";
+ document.getElementById("newStart").value="";
+ document.getElementById("newEnd").value="";
+
+ await loadEmployees();
+ renderEmployees();
+ render();
+
+ const visibleNow = activeEmployeesForDay(currentDayIndex).some(e => e.id === result.data.id);
+ if(!visibleNow){
+   alert("Salarié ajouté, mais non visible sur ce jour. Vérifie sa date d'entrée/sortie ou la limite de 8 salariés affichés.");
+ } else {
+   setStatus("Salarié ajouté");
+ }
 }
 function exportPdf(){const old=viewMode;viewMode="week";render();setTimeout(()=>{window.print();viewMode=old;render()},200)}
 async function exportJpg(){const old=viewMode;viewMode="week";render();await new Promise(r=>setTimeout(r,250));const area=document.getElementById("printArea");const canvas=await html2canvas(area,{backgroundColor:"#ffffff",scale:2});const a=document.createElement("a");a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;a.href=canvas.toDataURL("image/jpeg",.95);a.click();viewMode=old;render()}

@@ -80,7 +80,7 @@ font-weight:900;
 </style>
 </head>
 <body>
-<header><h1>Rock & Roll Bakery</h1><div class="status" id="syncStatus">Initialisation...</div></header>
+<header><h1>Rock & Roll Bakery</h1><div class="status" id="syncStatus">Initialisation... · export PNG v5</div></header>
 
 <div class="toolbar noPrint">
   <button class="btn" onclick="changeWeek(-1)">←</button>
@@ -94,7 +94,7 @@ font-weight:900;
   <button class="btn btn-light" onclick="setView('day')">Jour</button>
   <button class="btn btn-light desktopOnly" onclick="setView('week')">Semaine</button>
   <button class="btn btn-light" onclick="exportPdf()">PDF</button>
-  <button class="btn btn-light" onclick="exportJpg()">JPG</button>
+  <button class="btn btn-light" onclick="exportJpg()">Image PNG</button>
 </div>
 
 <div class="legend noPrint">
@@ -322,21 +322,14 @@ async function exportJpg(){
  const canvas = document.createElement("canvas");
  canvas.width = width * 2;
  canvas.height = height * 2;
- const ctx = canvas.getContext("2d");
+ const ctx = canvas.getContext("2d", { alpha:false });
  ctx.scale(2,2);
 
- ctx.fillStyle = "#ffffff";
+ ctx.save();
+ ctx.globalCompositeOperation = "source-over";
+ ctx.fillStyle = "rgb(255,255,255)";
  ctx.fillRect(0,0,width,height);
-
- ctx.fillStyle = "#111111";
- ctx.fillRect(0,0,width,55);
- ctx.fillStyle = "#ffd84d";
- ctx.font = "bold 28px Arial";
- ctx.fillText("Rock & Roll Bakery", margin, 36);
-
- ctx.fillStyle = "#111111";
- ctx.font = "bold 15px Arial";
- ctx.fillText(`Planning semaine ${weekNumber(currentWeekStart)} — ${frDate(currentWeekStart)} au ${frDate(addDays(currentWeekStart,6))}`, margin, 75);
+ ctx.restore();
 
  function rect(x,y,w,h,fill,stroke="#d6b27a"){
    ctx.fillStyle = fill;
@@ -354,6 +347,10 @@ async function exportJpg(){
    ctx.fillText(t,x,y);
  }
 
+ rect(0,0,width,55,"#111111","#111111");
+ text("Rock & Roll Bakery", margin, 30, 28, true, "#ffd84d", "left");
+ text(`Planning semaine ${weekNumber(currentWeekStart)} — ${frDate(currentWeekStart)} au ${frDate(addDays(currentWeekStart,6))}`, margin, 75, 15, true, "#111", "left");
+
  const colorMap = {
    presence:"#8a5a2b",
    ferie:"#ffd84d",
@@ -370,7 +367,6 @@ async function exportJpg(){
 
    rect(x,y,tableW,dayHeadH,"#ffd84d");
    text(`${DAYS[d]} ${frDate(addDays(currentWeekStart,d))}`, x+10, y+dayHeadH/2, 14, true, "#111", "left");
-
    y += dayHeadH;
 
    let cx=x;
@@ -410,14 +406,16 @@ async function exportJpg(){
      }
      y += rowH;
    }
-
    y += gap;
  }
 
- const a=document.createElement("a");
- a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;
- a.href=canvas.toDataURL("image/jpeg",0.96);
- a.click();
+ canvas.toBlob(function(blob){
+   const a=document.createElement("a");
+   a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.png`;
+   a.href=URL.createObjectURL(blob);
+   a.click();
+   setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+ }, "image/png");
 
  viewMode=old;
  render();

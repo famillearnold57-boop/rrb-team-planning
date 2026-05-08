@@ -299,26 +299,124 @@ async function exportJpg(){
  const old=viewMode;
  viewMode="week";
  render();
+ await new Promise(r=>setTimeout(r,100));
 
- await new Promise(r=>setTimeout(r,400));
+ const days = [0,1,2,3,4,5,6];
+ const margin = 40;
+ const titleH = 70;
+ const dayHeadH = 34;
+ const rowH = 22;
+ const headerH = 24;
+ const nameW = 150;
+ const infoW = 42;
+ const mealW = 42;
+ const slotW = 22;
+ const gap = 10;
+ const tableW = nameW + infoW*3 + mealW + SLOT_COUNT*slotW;
+ const employeesMax = 8;
 
- const area=document.getElementById("printArea");
+ const dayBlockH = dayHeadH + headerH + employeesMax * rowH;
+ const width = tableW + margin*2;
+ const height = titleH + days.length * (dayBlockH + gap) + margin;
 
- const canvas=await html2canvas(area,{
-   backgroundColor:"#ffffff",
-   scale:2,
-   useCORS:true,
-   logging:false
- });
-
+ const canvas = document.createElement("canvas");
+ canvas.width = width * 2;
+ canvas.height = height * 2;
  const ctx = canvas.getContext("2d");
- ctx.globalCompositeOperation = "destination-over";
+ ctx.scale(2,2);
+
  ctx.fillStyle = "#ffffff";
- ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.fillRect(0,0,width,height);
+
+ ctx.fillStyle = "#111111";
+ ctx.fillRect(0,0,width,55);
+ ctx.fillStyle = "#ffd84d";
+ ctx.font = "bold 28px Arial";
+ ctx.fillText("Rock & Roll Bakery", margin, 36);
+
+ ctx.fillStyle = "#111111";
+ ctx.font = "bold 15px Arial";
+ ctx.fillText(`Planning semaine ${weekNumber(currentWeekStart)} — ${frDate(currentWeekStart)} au ${frDate(addDays(currentWeekStart,6))}`, margin, 75);
+
+ function rect(x,y,w,h,fill,stroke="#d6b27a"){
+   ctx.fillStyle = fill;
+   ctx.fillRect(x,y,w,h);
+   ctx.strokeStyle = stroke;
+   ctx.lineWidth = 1;
+   ctx.strokeRect(x,y,w,h);
+ }
+
+ function text(t,x,y,size=10,bold=false,color="#111",align="center"){
+   ctx.fillStyle=color;
+   ctx.font = `${bold ? "bold " : ""}${size}px Arial`;
+   ctx.textAlign=align;
+   ctx.textBaseline="middle";
+   ctx.fillText(t,x,y);
+ }
+
+ const colorMap = {
+   presence:"#8a5a2b",
+   ferie:"#ffd84d",
+   maladie:"#e85d5d",
+   conges:"#6cb7d9",
+   empty:"#ffffff"
+ };
+
+ let y = titleH + 18;
+
+ for(const d of days){
+   const active = activeEmployeesForDay(d);
+   const x = margin;
+
+   rect(x,y,tableW,dayHeadH,"#ffd84d");
+   text(`${DAYS[d]} ${frDate(addDays(currentWeekStart,d))}`, x+10, y+dayHeadH/2, 14, true, "#111", "left");
+
+   y += dayHeadH;
+
+   let cx=x;
+   rect(cx,y,nameW,headerH,"#fff7e6"); text("Salarié",cx+nameW/2,y+headerH/2,9,true); cx+=nameW;
+   rect(cx,y,infoW,headerH,"#fff7e6"); text("Contr.",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
+   rect(cx,y,infoW,headerH,"#fff7e6"); text("Jour",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
+   rect(cx,y,infoW,headerH,"#fff7e6"); text("Sem.",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
+   rect(cx,y,mealW,headerH,"#fff7e6"); text("Rep.",cx+mealW/2,y+headerH/2,8,true); cx+=mealW;
+
+   for(let s=0;s<SLOT_COUNT;s++){
+     rect(cx,y,slotW,headerH,"#ffdd65");
+     const total=8*60+s*30;
+     const h=Math.floor(total/60);
+     const m=total%60;
+     if(m===0) text(`${h}h`,cx+2,y+headerH/2,8,true,"#111","left");
+     cx+=slotW;
+   }
+
+   y += headerH;
+
+   for(let r=0;r<employeesMax;r++){
+     const emp = active[r];
+     cx=x;
+     rect(cx,y,nameW,rowH,"#fffaf0");
+     text(emp ? emp.name : "",cx+5,y+rowH/2,9,true,"#111","left");
+     cx+=nameW;
+
+     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? `${emp.contract_hours ?? 0}h` : "",cx+infoW/2,y+rowH/2,8,true,"#8a5a2b"); cx+=infoW;
+     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? formatHours(dayTotal(emp.id,d)) : "",cx+infoW/2,y+rowH/2,8,true,"#111"); cx+=infoW;
+     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? formatHours(weekTotal(emp.id)) : "",cx+infoW/2,y+rowH/2,8,true,"#d69800"); cx+=infoW;
+     rect(cx,y,mealW,rowH,"#ffffff"); text(emp && mealChecked(emp.id,d) ? "✓" : "",cx+mealW/2,y+rowH/2,11,true); cx+=mealW;
+
+     for(let s=0;s<SLOT_COUNT;s++){
+       const type = emp ? getShift(emp.id,d,s) : "empty";
+       rect(cx,y,slotW,rowH,colorMap[type] || "#ffffff");
+       cx+=slotW;
+     }
+     y += rowH;
+   }
+
+   y += gap;
+ }
 
  const a=document.createElement("a");
  a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;
- a.href=canvas.toDataURL("image/jpeg",0.98);
+ a.href=canvas.toDataURL("image/jpeg",0.96);
  a.click();
 
  viewMode=old;

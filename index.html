@@ -77,10 +77,68 @@ font-weight:900;
  .planning th,.planning td{height:15px;font-size:8px}.nameCol{min-width:95px;width:95px;font-size:9px;padding-left:3px!important}
  .infoCol{min-width:27px;width:27px;font-size:8px}.slotCell{min-width:16px;width:16px}
 }
+
+/* RRB_A4_EXPORT_LOCK */
+#a4ExportClone{
+  width:794px;
+  min-height:1123px;
+  background:#ffffff;
+  color:#111111;
+  padding:22px;
+  box-sizing:border-box;
+  font-family:Arial, Helvetica, sans-serif;
+}
+#a4ExportClone .card{
+  margin-bottom:8px !important;
+  border-radius:6px !important;
+  box-shadow:none !important;
+  border:1px solid #d6b27a !important;
+  break-inside:avoid;
+}
+#a4ExportClone .dayHead{
+  font-size:13px !important;
+  padding:4px 6px !important;
+  height:24px !important;
+}
+#a4ExportClone .planning th,
+#a4ExportClone .planning td{
+  height:15px !important;
+  font-size:8px !important;
+}
+#a4ExportClone .nameCol{
+  min-width:95px !important;
+  width:95px !important;
+  font-size:9px !important;
+  padding-left:3px !important;
+}
+#a4ExportClone .infoCol{
+  min-width:27px !important;
+  width:27px !important;
+  font-size:8px !important;
+}
+#a4ExportClone .slotCell{
+  min-width:16px !important;
+  width:16px !important;
+}
+#a4ExportClone .planning th{
+  position:relative !important;
+  text-align:left !important;
+  padding-left:0 !important;
+}
+#a4ExportClone .planning th span.hourLabel{
+  position:relative !important;
+  left:-7px !important;
+  display:inline-block !important;
+}
+#a4ExportClone *{
+  -webkit-print-color-adjust:exact !important;
+  print-color-adjust:exact !important;
+}
+
 </style>
 </head>
 <body>
-<header><h1>Rock & Roll Bakery</h1><div class="status" id="syncStatus">Initialisation... · export PNG v5</div></header>
+<header><h1>Rock & Roll Bakery</h1><div class="status" id="syncStatus">Initialisation... · export JPG A4 v6</div></header>
 
 <div class="toolbar noPrint">
   <button class="btn" onclick="changeWeek(-1)">←</button>
@@ -94,7 +152,7 @@ font-weight:900;
   <button class="btn btn-light" onclick="setView('day')">Jour</button>
   <button class="btn btn-light desktopOnly" onclick="setView('week')">Semaine</button>
   <button class="btn btn-light" onclick="exportPdf()">PDF</button>
-  <button class="btn btn-light" onclick="exportJpg()">Image PNG</button>
+  <button class="btn btn-light" onclick="exportJpg()">JPG</button>
 </div>
 
 <div class="legend noPrint">
@@ -299,126 +357,54 @@ async function exportJpg(){
  const old=viewMode;
  viewMode="week";
  render();
- await new Promise(r=>setTimeout(r,100));
+ await new Promise(r=>setTimeout(r,300));
 
- const days = [0,1,2,3,4,5,6];
- const margin = 40;
- const titleH = 70;
- const dayHeadH = 34;
- const rowH = 22;
- const headerH = 24;
- const nameW = 150;
- const infoW = 42;
- const mealW = 42;
- const slotW = 22;
- const gap = 10;
- const tableW = nameW + infoW*3 + mealW + SLOT_COUNT*slotW;
- const employeesMax = 8;
+ const source = document.getElementById("printArea");
+ const cloneWrap = document.createElement("div");
+ cloneWrap.style.position = "fixed";
+ cloneWrap.style.left = "-10000px";
+ cloneWrap.style.top = "0";
+ cloneWrap.style.background = "#ffffff";
+ cloneWrap.style.zIndex = "-1";
 
- const dayBlockH = dayHeadH + headerH + employeesMax * rowH;
- const width = tableW + margin*2;
- const height = titleH + days.length * (dayBlockH + gap) + margin;
+ const clone = source.cloneNode(true);
+ clone.id = "a4ExportClone";
+ cloneWrap.appendChild(clone);
+ document.body.appendChild(cloneWrap);
 
- const canvas = document.createElement("canvas");
- canvas.width = width * 2;
- canvas.height = height * 2;
- const ctx = canvas.getContext("2d", { alpha:false });
- ctx.scale(2,2);
+ await new Promise(r=>setTimeout(r,300));
 
- ctx.save();
- ctx.globalCompositeOperation = "source-over";
- ctx.fillStyle = "rgb(255,255,255)";
- ctx.fillRect(0,0,width,height);
- ctx.restore();
+ try{
+   const canvas = await html2canvas(clone,{
+     backgroundColor:"#ffffff",
+     scale:2,
+     useCORS:true,
+     allowTaint:true,
+     logging:false,
+     windowWidth:794,
+     windowHeight:1123
+   });
 
- function rect(x,y,w,h,fill,stroke="#d6b27a"){
-   ctx.fillStyle = fill;
-   ctx.fillRect(x,y,w,h);
-   ctx.strokeStyle = stroke;
-   ctx.lineWidth = 1;
-   ctx.strokeRect(x,y,w,h);
- }
+   const finalCanvas = document.createElement("canvas");
+   finalCanvas.width = canvas.width;
+   finalCanvas.height = canvas.height;
+   const ctx = finalCanvas.getContext("2d", { alpha:false });
+   ctx.fillStyle = "#ffffff";
+   ctx.fillRect(0,0,finalCanvas.width,finalCanvas.height);
+   ctx.drawImage(canvas,0,0);
 
- function text(t,x,y,size=10,bold=false,color="#111",align="center"){
-   ctx.fillStyle=color;
-   ctx.font = `${bold ? "bold " : ""}${size}px Arial`;
-   ctx.textAlign=align;
-   ctx.textBaseline="middle";
-   ctx.fillText(t,x,y);
- }
-
- rect(0,0,width,55,"#111111","#111111");
- text("Rock & Roll Bakery", margin, 30, 28, true, "#ffd84d", "left");
- text(`Planning semaine ${weekNumber(currentWeekStart)} — ${frDate(currentWeekStart)} au ${frDate(addDays(currentWeekStart,6))}`, margin, 75, 15, true, "#111", "left");
-
- const colorMap = {
-   presence:"#8a5a2b",
-   ferie:"#ffd84d",
-   maladie:"#e85d5d",
-   conges:"#6cb7d9",
-   empty:"#ffffff"
- };
-
- let y = titleH + 18;
-
- for(const d of days){
-   const active = activeEmployeesForDay(d);
-   const x = margin;
-
-   rect(x,y,tableW,dayHeadH,"#ffd84d");
-   text(`${DAYS[d]} ${frDate(addDays(currentWeekStart,d))}`, x+10, y+dayHeadH/2, 14, true, "#111", "left");
-   y += dayHeadH;
-
-   let cx=x;
-   rect(cx,y,nameW,headerH,"#fff7e6"); text("Salarié",cx+nameW/2,y+headerH/2,9,true); cx+=nameW;
-   rect(cx,y,infoW,headerH,"#fff7e6"); text("Contr.",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
-   rect(cx,y,infoW,headerH,"#fff7e6"); text("Jour",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
-   rect(cx,y,infoW,headerH,"#fff7e6"); text("Sem.",cx+infoW/2,y+headerH/2,8,true); cx+=infoW;
-   rect(cx,y,mealW,headerH,"#fff7e6"); text("Rep.",cx+mealW/2,y+headerH/2,8,true); cx+=mealW;
-
-   for(let s=0;s<SLOT_COUNT;s++){
-     rect(cx,y,slotW,headerH,"#ffdd65");
-     const total=8*60+s*30;
-     const h=Math.floor(total/60);
-     const m=total%60;
-     if(m===0) text(`${h}h`,cx+2,y+headerH/2,8,true,"#111","left");
-     cx+=slotW;
-   }
-
-   y += headerH;
-
-   for(let r=0;r<employeesMax;r++){
-     const emp = active[r];
-     cx=x;
-     rect(cx,y,nameW,rowH,"#fffaf0");
-     text(emp ? emp.name : "",cx+5,y+rowH/2,9,true,"#111","left");
-     cx+=nameW;
-
-     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? `${emp.contract_hours ?? 0}h` : "",cx+infoW/2,y+rowH/2,8,true,"#8a5a2b"); cx+=infoW;
-     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? formatHours(dayTotal(emp.id,d)) : "",cx+infoW/2,y+rowH/2,8,true,"#111"); cx+=infoW;
-     rect(cx,y,infoW,rowH,"#ffffff"); text(emp ? formatHours(weekTotal(emp.id)) : "",cx+infoW/2,y+rowH/2,8,true,"#d69800"); cx+=infoW;
-     rect(cx,y,mealW,rowH,"#ffffff"); text(emp && mealChecked(emp.id,d) ? "✓" : "",cx+mealW/2,y+rowH/2,11,true); cx+=mealW;
-
-     for(let s=0;s<SLOT_COUNT;s++){
-       const type = emp ? getShift(emp.id,d,s) : "empty";
-       rect(cx,y,slotW,rowH,colorMap[type] || "#ffffff");
-       cx+=slotW;
-     }
-     y += rowH;
-   }
-   y += gap;
- }
-
- canvas.toBlob(function(blob){
    const a=document.createElement("a");
-   a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.png`;
-   a.href=URL.createObjectURL(blob);
+   a.download=`planning-rrb-semaine-${weekNumber(currentWeekStart)}.jpg`;
+   a.href=finalCanvas.toDataURL("image/jpeg",0.96);
    a.click();
-   setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
- }, "image/png");
-
- viewMode=old;
- render();
+ }catch(e){
+   console.error(e);
+   alert("Export JPG impossible dans ce navigateur. Utilise Edge ou Chrome, ou exporte en PDF.");
+ }finally{
+   document.body.removeChild(cloneWrap);
+   viewMode=old;
+   render();
+ }
 }
 init();
 </script>
